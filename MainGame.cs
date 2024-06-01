@@ -17,10 +17,11 @@ namespace StampmanClicker
         private Texture2D stampMakerTexture;
         private Texture2D tableTexture;
 
-        MouseState ms, oldms;
-        KeyboardState ks, oldks;
+        private MouseState ms, oldms;
+        private KeyboardState ks, oldks;
 
         private int score;
+        private bool isBeingPressed = false;
 
         private DateTime lastClick;
 
@@ -68,12 +69,19 @@ namespace StampmanClicker
             {
                 if(lastClick == default || DateTime.Now.Subtract(lastClick).TotalMilliseconds >= 100)
                 {
+                    isBeingPressed = true;
                     lastClick = DateTime.Now;
                     score++;
                 }
             }
 
-            oldms = ms;
+            if ((ms.LeftButton != ButtonState.Pressed && oldms.LeftButton == ButtonState.Pressed)
+                || (!ks.IsKeyDown(Keys.Space) && oldks.IsKeyDown(Keys.Space)))
+            {
+                isBeingPressed = false;
+            }
+
+                oldms = ms;
             oldks = ks;
 
             base.Update(gameTime);
@@ -96,14 +104,12 @@ namespace StampmanClicker
                 (Window.ClientBounds.Height / 2) - (bookTexture.Height * 0.7f / 2) + 60
                 ), null, Color.White, 0, Vector2.Zero, new Vector2(0.7f, 0.7f), SpriteEffects.None, 0);
 
-            _spriteBatch.Draw(stampTexture, new Vector2(
-                (Window.ClientBounds.Width / 2) - (stampTexture.Width / 2),
-                (Window.ClientBounds.Height / 2) - (stampTexture.Height / 2)
-                ), Color.White);
+            int stampMakerPixelDelta = 0;
+            if (isBeingPressed) stampMakerPixelDelta = 20;
 
             _spriteBatch.Draw(stampMakerTexture, new Vector2(
                 (Window.ClientBounds.Width / 2) - (stampMakerTexture.Width / 2),
-                (Window.ClientBounds.Height / 2) - (stampMakerTexture.Height / 2)
+                (Window.ClientBounds.Height / 2) - (stampMakerTexture.Height / 2) - 20 + stampMakerPixelDelta
                 ), Color.White);
             #endregion
 
