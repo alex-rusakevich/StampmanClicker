@@ -15,7 +15,7 @@
 
 #begin Font/Press Start 2P.spritefont
 /importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
+/processor:LocalizedFontProcessor
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Compressed
 /build:Font/Press Start 2P.spritefont

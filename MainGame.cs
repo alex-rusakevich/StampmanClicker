@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Diagnostics;
 
 namespace StampmanClicker
 {
@@ -15,11 +16,16 @@ namespace StampmanClicker
         private Texture2D bookTexture;
         private Texture2D stampMakerTexture;
         private Texture2D tableTexture;
+        private Texture2D stampTexture;
 
         private MouseState ms, oldms;
         private KeyboardState ks, oldks;
 
-        private int score;
+        private uint money;
+        private uint moneyDelta;
+        private uint level;
+        private uint booksRecommended;
+
         private bool isBeingPressed = false;
 
         private DateTime lastClick;
@@ -34,11 +40,9 @@ namespace StampmanClicker
         protected override void Initialize()
         {
             _graphics.IsFullScreen = false;
-            _graphics.PreferredBackBufferWidth = 400;
+            _graphics.PreferredBackBufferWidth = 800;
             _graphics.PreferredBackBufferHeight = 600;
             _graphics.ApplyChanges();
-
-            score = 0;
 
             base.Initialize();
         }
@@ -50,8 +54,26 @@ namespace StampmanClicker
             _font = Content.Load<SpriteFont>(@"Font\Press Start 2P");
 
             bookTexture = Content.Load<Texture2D>(@"Image\book");
+            stampTexture = Content.Load<Texture2D>(@"Image\stamp");
             stampMakerTexture = Content.Load<Texture2D>(@"Image\stampMaker");
             tableTexture = Content.Load<Texture2D>(@"Image\table");
+
+            var saveGameData = SaveGame.Load();
+            money = saveGameData.Money;
+            moneyDelta = saveGameData.MoneyDelta;
+            level = saveGameData.Level;
+            booksRecommended = saveGameData.BooksRecommended;
+        }
+
+        protected override void UnloadContent()
+        {
+            SaveGame.Save(new SaveGameData() { 
+                Money = money,
+                MoneyDelta = moneyDelta,
+                Level = level,
+                BooksRecommended = booksRecommended,
+            });
+            base.UnloadContent();
         }
 
         protected override void Update(GameTime gameTime)
@@ -69,7 +91,9 @@ namespace StampmanClicker
                 {
                     isBeingPressed = true;
                     lastClick = DateTime.Now;
-                    score++;
+
+                    money += moneyDelta;
+                    booksRecommended += 1;
                 }
             }
 
@@ -79,7 +103,7 @@ namespace StampmanClicker
                 isBeingPressed = false;
             }
 
-                oldms = ms;
+            oldms = ms;
             oldks = ks;
 
             base.Update(gameTime);
@@ -92,15 +116,38 @@ namespace StampmanClicker
             _spriteBatch.Begin();
 
             #region Draw textures
-            _spriteBatch.Draw(tableTexture, new Vector2(
-                (Window.ClientBounds.Width/2) - (tableTexture.Width / 2),
-                Window.ClientBounds.Height - tableTexture.Height
-                ), Color.White);
+            double tableScale = Math.Round((float) Window.ClientBounds.Width / tableTexture.Width, 1);
 
+            _spriteBatch.Draw(tableTexture, new Vector2(
+                0,
+                -40
+                ), null, Color.White, 0, Vector2.Zero, new Vector2((float) tableScale, (float) tableScale), SpriteEffects.None, 0);
+
+            // Center book
             _spriteBatch.Draw(bookTexture, new Vector2(
                 (Window.ClientBounds.Width / 2) - (bookTexture.Width * 0.7f / 2),
                 (Window.ClientBounds.Height / 2) - (bookTexture.Height * 0.7f / 2) + 60
                 ), null, Color.White, 0, Vector2.Zero, new Vector2(0.7f, 0.7f), SpriteEffects.None, 0);
+
+            // Left book
+            _spriteBatch.Draw(bookTexture, new Vector2(
+                0 - (bookTexture.Width * 0.7f / 2),
+                (Window.ClientBounds.Height / 2) - (bookTexture.Height * 0.7f / 2) + 60
+                ), null, Color.White, 0, Vector2.Zero, new Vector2(0.7f, 0.7f), SpriteEffects.None, 0);
+
+            // Right book
+            if(booksRecommended > 0)
+            { 
+                _spriteBatch.Draw(bookTexture, new Vector2(
+                    Window.ClientBounds.Width - (bookTexture.Width * 0.7f / 2),
+                    (Window.ClientBounds.Height / 2) - (bookTexture.Height * 0.7f / 2) + 60
+                    ), null, Color.White, 0, Vector2.Zero, new Vector2(0.7f, 0.7f), SpriteEffects.None, 0);
+
+                _spriteBatch.Draw(stampTexture, new Vector2(
+                    Window.ClientBounds.Width - (stampTexture.Width * 0.3f / 2),
+                    (Window.ClientBounds.Height / 2) - (stampTexture.Height * 0.3f / 2) + 60
+                    ), null, Color.White, 0, Vector2.Zero, new Vector2(0.3f, 0.3f), SpriteEffects.None, 0);
+            }
 
             int stampMakerPixelDelta = 0;
             if (isBeingPressed) stampMakerPixelDelta = 20;
@@ -111,13 +158,13 @@ namespace StampmanClicker
                 ), Color.White);
             #endregion
 
-            string scoreRepr = $"{score}K$";
-            var scoreRect = _font.MeasureString(scoreRepr);
+            string moneyRepr = $"{money}$";
+            string booksRecommendedRepr = $"Рек-но: {booksRecommended} кн.";
+            string moneyDeltaRepr = $"{moneyDelta}$ за рек.";
 
-            _spriteBatch.DrawString(_font, scoreRepr, new Vector2(
-                (Window.ClientBounds.Width / 2) - scoreRect.X / 2,
-                20
-                ), Color.White);
+            _spriteBatch.DrawString(_font, moneyRepr, new Vector2(20, 20), Color.White);
+            _spriteBatch.DrawString(_font, booksRecommendedRepr, new Vector2(20, 40), Color.White);
+            _spriteBatch.DrawString(_font, moneyDeltaRepr, new Vector2(20, 60), Color.White);
 
             _spriteBatch.End();
 

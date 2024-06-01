@@ -6,7 +6,7 @@ of the font in your game, and to change the characters which are available to dr
 with.
 -->
 <XnaContent xmlns:Graphics="Microsoft.Xna.Framework.Content.Pipeline.Graphics">
-  <Asset Type="Graphics:FontDescription">
+  <Asset Type="Graphics:LocalizedFontDescription">
 
     <!--
     Modify this string to change the font that will be imported.
@@ -17,7 +17,7 @@ with.
     Size is a float value, measured in points. Modify this value to change
     the size of the font.
     -->
-    <Size>14</Size>
+    <Size>12</Size>
 
     <!--
     Spacing is a float value, measured in pixels. Modify this value to change
@@ -55,6 +55,11 @@ with.
         <Start>&#32;</Start>
         <End>&#126;</End>
       </CharacterRegion>
+		
+		<CharacterRegion>
+			<Start>&#1040;</Start>
+			<End>&#1112;</End>
+		</CharacterRegion>
     </CharacterRegions>
   </Asset>
 </XnaContent>
