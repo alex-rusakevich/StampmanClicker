@@ -18,6 +18,13 @@ namespace StampmanClicker
         private Texture2D tableTexture;
         private Texture2D stampTexture;
 
+        private Sprite bookCenterSprite;
+        private Sprite bookLeftSprite;
+        private Sprite bookRightSprite;
+        private Sprite tableSprite;
+        private Sprite stampSprite;
+        private Sprite stampMakerSprite;
+
         private MouseState ms, oldms;
         private KeyboardState ks, oldks;
 
@@ -26,10 +33,8 @@ namespace StampmanClicker
         private uint level;
         private uint booksRecommended;
 
-        private bool isBeingPressed = false;
-
         private DateTime lastClick;
-
+        private bool isStampMakerPressed = false;
         private bool isRedrawPending = true;
 
         public MainGame()
@@ -60,6 +65,33 @@ namespace StampmanClicker
             stampMakerTexture = Content.Load<Texture2D>(@"Image\stampMaker");
             tableTexture = Content.Load<Texture2D>(@"Image\table");
 
+            #region Create sprites
+            tableSprite = new Sprite(tableTexture, new Vector2(
+                (Window.ClientBounds.Width / 2 - tableTexture.Width / 2),
+                (Window.ClientBounds.Height - tableTexture.Height)
+                ));
+            stampMakerSprite = new Sprite(stampMakerTexture, new Vector2(
+                (Window.ClientBounds.Width / 2) - (stampMakerTexture.Width / 2),
+                (Window.ClientBounds.Height / 2) - (stampMakerTexture.Height / 2) - 40));
+            bookCenterSprite = new Sprite(bookTexture, new Vector2(
+                (Window.ClientBounds.Width / 2) - (bookTexture.Width / 2),
+                (Window.ClientBounds.Height / 2) - (bookTexture.Height / 2) + 60
+                ));
+
+            bookLeftSprite = new Sprite(bookTexture, new Vector2(
+                0 - (bookTexture.Width / 2),
+                (Window.ClientBounds.Height / 2) - (bookTexture.Height / 2) + 60
+                ));
+            bookRightSprite = new Sprite(bookTexture, new Vector2(
+                Window.ClientBounds.Width - (bookTexture.Width / 2),
+                (Window.ClientBounds.Height / 2) - (bookTexture.Height / 2) + 60
+                ));
+            stampSprite = new Sprite(stampTexture, new Vector2(
+                Window.ClientBounds.Width - (stampTexture.Width / 2),
+                (Window.ClientBounds.Height / 2) - (stampTexture.Height / 2) + 60
+                ));
+            #endregion
+
             var saveGameData = SaveGame.Load();
             money = saveGameData.Money;
             moneyDelta = saveGameData.MoneyDelta;
@@ -78,34 +110,50 @@ namespace StampmanClicker
             base.UnloadContent();
         }
 
+        private void StampClicked()
+        {
+            if (lastClick == default || DateTime.Now.Subtract(lastClick).TotalMilliseconds >= 100)
+            {
+                stampMakerSprite.position.Y += 20;
+
+                lastClick = DateTime.Now;
+
+                money += moneyDelta;
+                booksRecommended += 1;
+
+                isStampMakerPressed = true;
+                isRedrawPending = true;
+            }
+        }
+
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
             ms = Mouse.GetState();
+            Rectangle mouseRect = new((int)ms.X, (int)ms.Y, 1, 1);
             ks = Keyboard.GetState();
 
-            if ((ms.LeftButton == ButtonState.Pressed && oldms.LeftButton != ButtonState.Pressed)
-                || (ks.IsKeyDown(Keys.Space) && !oldks.IsKeyDown(Keys.Space)))
+            if (ms.LeftButton == ButtonState.Pressed && oldms.LeftButton != ButtonState.Pressed)
             {
-                if(lastClick == default || DateTime.Now.Subtract(lastClick).TotalMilliseconds >= 100)
+                if (stampMakerSprite.Rectangle.Intersects(mouseRect)
+                    || bookCenterSprite.Rectangle.Intersects(mouseRect))
                 {
-                    isBeingPressed = true;
-                    lastClick = DateTime.Now;
-
-                    money += moneyDelta;
-                    booksRecommended += 1;
-
-                    isRedrawPending = true;
+                    StampClicked();
                 }
             }
-
-            if ((ms.LeftButton != ButtonState.Pressed && oldms.LeftButton == ButtonState.Pressed)
-                || (!ks.IsKeyDown(Keys.Space) && oldks.IsKeyDown(Keys.Space)))
+            else if (ks.IsKeyDown(Keys.Space) && !oldks.IsKeyDown(Keys.Space))
             {
-                isBeingPressed = false;
+                StampClicked();
+            }
+
+            if (((ms.LeftButton != ButtonState.Pressed && oldms.LeftButton == ButtonState.Pressed)
+                || (!ks.IsKeyDown(Keys.Space) && oldks.IsKeyDown(Keys.Space))) && isStampMakerPressed)
+            {
+                stampMakerSprite.position.Y -= 20;
                 isRedrawPending = true;
+                isStampMakerPressed = false;
             }
 
             oldms = ms;
@@ -124,46 +172,18 @@ namespace StampmanClicker
             _spriteBatch.Begin();
 
             #region Draw textures
-            double tableScale = Math.Round((float) Window.ClientBounds.Width / tableTexture.Width, 1);
+            // double tableScale = Math.Round((float) Window.ClientBounds.Width / tableTexture.Width, 1);
 
-            _spriteBatch.Draw(tableTexture, new Vector2(
-                0,
-                -40
-                ), null, Color.White, 0, Vector2.Zero, new Vector2((float) tableScale, (float) tableScale), SpriteEffects.None, 0);
+            tableSprite.Draw(_spriteBatch);
+            bookCenterSprite.Draw(_spriteBatch);
+            stampMakerSprite.Draw(_spriteBatch);
 
-            // Center book
-            _spriteBatch.Draw(bookTexture, new Vector2(
-                (Window.ClientBounds.Width / 2) - (bookTexture.Width * 0.7f / 2),
-                (Window.ClientBounds.Height / 2) - (bookTexture.Height * 0.7f / 2) + 60
-                ), null, Color.White, 0, Vector2.Zero, new Vector2(0.7f, 0.7f), SpriteEffects.None, 0);
+            bookLeftSprite.Draw(_spriteBatch);
 
-            // Left book
-            _spriteBatch.Draw(bookTexture, new Vector2(
-                0 - (bookTexture.Width * 0.7f / 2),
-                (Window.ClientBounds.Height / 2) - (bookTexture.Height * 0.7f / 2) + 60
-                ), null, Color.White, 0, Vector2.Zero, new Vector2(0.7f, 0.7f), SpriteEffects.None, 0);
-
-            // Right book
-            if(booksRecommended > 0)
-            { 
-                _spriteBatch.Draw(bookTexture, new Vector2(
-                    Window.ClientBounds.Width - (bookTexture.Width * 0.7f / 2),
-                    (Window.ClientBounds.Height / 2) - (bookTexture.Height * 0.7f / 2) + 60
-                    ), null, Color.White, 0, Vector2.Zero, new Vector2(0.7f, 0.7f), SpriteEffects.None, 0);
-
-                _spriteBatch.Draw(stampTexture, new Vector2(
-                    Window.ClientBounds.Width - (stampTexture.Width * 0.3f / 2),
-                    (Window.ClientBounds.Height / 2) - (stampTexture.Height * 0.3f / 2) + 60
-                    ), null, Color.White, 0, Vector2.Zero, new Vector2(0.3f, 0.3f), SpriteEffects.None, 0);
+            if(booksRecommended > 0) {
+                bookRightSprite.Draw(_spriteBatch);
+                stampSprite.Draw(_spriteBatch);
             }
-
-            int stampMakerPixelDelta = 0;
-            if (isBeingPressed) stampMakerPixelDelta = 20;
-
-            _spriteBatch.Draw(stampMakerTexture, new Vector2(
-                (Window.ClientBounds.Width / 2) - (stampMakerTexture.Width / 2),
-                (Window.ClientBounds.Height / 2) - (stampMakerTexture.Height / 2) - 20 + stampMakerPixelDelta
-                ), Color.White);
             #endregion
 
             string moneyRepr = $"{money}$";
