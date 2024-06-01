@@ -30,6 +30,8 @@ namespace StampmanClicker
 
         private DateTime lastClick;
 
+        private bool isRedrawPending = true;
+
         public MainGame()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -94,6 +96,8 @@ namespace StampmanClicker
 
                     money += moneyDelta;
                     booksRecommended += 1;
+
+                    isRedrawPending = true;
                 }
             }
 
@@ -101,10 +105,14 @@ namespace StampmanClicker
                 || (!ks.IsKeyDown(Keys.Space) && oldks.IsKeyDown(Keys.Space)))
             {
                 isBeingPressed = false;
+                isRedrawPending = true;
             }
 
             oldms = ms;
             oldks = ks;
+
+            if (!isRedrawPending)
+                SuppressDraw();
 
             base.Update(gameTime);
         }
@@ -169,6 +177,8 @@ namespace StampmanClicker
             _spriteBatch.End();
 
             base.Draw(gameTime);
+
+            isRedrawPending = false;
         }
     }
 }
