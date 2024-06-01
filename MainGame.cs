@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 namespace StampmanClicker
 {
@@ -16,7 +17,12 @@ namespace StampmanClicker
         private Texture2D stampMakerTexture;
         private Texture2D tableTexture;
 
+        MouseState ms, oldms;
+        KeyboardState ks, oldks;
+
         private int score;
+
+        private DateTime lastClick;
 
         public MainGame()
         {
@@ -54,6 +60,22 @@ namespace StampmanClicker
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            ms = Mouse.GetState();
+            ks = Keyboard.GetState();
+
+            if ((ms.LeftButton == ButtonState.Pressed && oldms.LeftButton != ButtonState.Pressed)
+                || (ks.IsKeyDown(Keys.Space) && !oldks.IsKeyDown(Keys.Space)))
+            {
+                if(lastClick == default || DateTime.Now.Subtract(lastClick).TotalMilliseconds >= 100)
+                {
+                    lastClick = DateTime.Now;
+                    score++;
+                }
+            }
+
+            oldms = ms;
+            oldks = ks;
+
             base.Update(gameTime);
         }
 
@@ -85,8 +107,10 @@ namespace StampmanClicker
                 ), Color.White);
             #endregion
 
-            var scoreRect = _font.MeasureString(score.ToString());
-            _spriteBatch.DrawString(_font, score.ToString(), new Vector2(
+            string scoreRepr = $"{score}K$";
+            var scoreRect = _font.MeasureString(scoreRepr);
+
+            _spriteBatch.DrawString(_font, scoreRepr, new Vector2(
                 (Window.ClientBounds.Width / 2) - scoreRect.X / 2,
                 20
                 ), Color.White);
