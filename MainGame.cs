@@ -13,7 +13,6 @@ namespace StampmanClicker
         private SpriteFont _font;
 
         private Texture2D bookTexture;
-        private Texture2D stampTexture;
         private Texture2D stampMakerTexture;
         private Texture2D tableTexture;
 
@@ -51,7 +50,6 @@ namespace StampmanClicker
             _font = Content.Load<SpriteFont>(@"Font\Press Start 2P");
 
             bookTexture = Content.Load<Texture2D>(@"Image\book");
-            stampTexture = Content.Load<Texture2D>(@"Image\stamp");
             stampMakerTexture = Content.Load<Texture2D>(@"Image\stampMaker");
             tableTexture = Content.Load<Texture2D>(@"Image\table");
         }
